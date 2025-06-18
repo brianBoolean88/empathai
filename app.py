@@ -4,8 +4,10 @@ from pydantic import BaseModel
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
 
+# Initialize FastAPI app
 app = FastAPI()
 
+# Enable CORS for frontend access
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -17,33 +19,32 @@ app.add_middleware(
 class Message(BaseModel):
     text: str
 
-model = AutoModelForCausalLM.from_pretrained("OEvortex/HelpingAI2-9B", trust_remote_code=True)
-tokenizer = AutoTokenizer.from_pretrained("OEvortex/HelpingAI2-9B", trust_remote_code=True)
-model.eval()
+MODEL_NAME = "tiiuae/falcon-rw-1b"
+tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+model = AutoModelForCausalLM.from_pretrained(MODEL_NAME)
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+model = model.to(device)
 
 @app.post("/api/respond")
 async def respond(message: Message):
-    chat = [
-        {"role": "system", "content": "You are HelpingAI, an emotional AI. Always answer in the HelpingAI style."},
-        {"role": "user", "content": message.text}
-    ]
-
-    inputs = tokenizer.apply_chat_template(
-        chat,
-        add_generation_prompt=True,
-        return_tensors="pt"
-    ).to(model.device)
-
-    with torch.no_grad():
-        outputs = model.generate(
-            inputs,
-            max_new_tokens=256,
+    try:
+        prompt = f"You are an empathetic assistant. Respond to this: {message.text}"
+        inputs = tokenizer(prompt, return_tensors="pt").to(device)
+        
+        output = model.generate(
+            **inputs,
+            max_new_tokens=100,
             do_sample=True,
-            temperature=0.6,
+            temperature=0.7,
             top_p=0.9,
-            eos_token_id=tokenizer.eos_token_id
+            pad_token_id=tokenizer.eos_token_id
         )
+        
+        response_text = tokenizer.decode(output[0], skip_special_tokens=True).replace(prompt, "").strip()
 
-    response = outputs[0][inputs.shape[-1]:]
-    decoded = tokenizer.decode(response, skip_special_tokens=True)
-    return {"reply": decoded}
+        return { "response": response_text }
+
+    except Exception as e:
+        print("Error:", e)
+        return { "response": "Sorry, something went wrong processing your message." }

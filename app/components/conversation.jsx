@@ -23,22 +23,41 @@ const Conversation = () => {
 
         const finalBotMessage = {
             role: "bot",
-            text: "Sorry, I didn't understand that.",
+            text: "",
         };
+        let emotion = "neutral";
+
+        /*
+        try{
+            const res1 = await fetch("/api/classify", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text: input }),
+            });
+            const data1 = await res1.json();
+            console.log("Predicted Emotion:", data1.emotion);
+            finalBotMessage.text = `I detected that you are feeling ${data1.emotion}. `;
+            emotion = data1.emotion;
+        }
+        catch (error) {
+            console.error("Error fetching emotion:", error);
+            finalBotMessage.text = "I couldn't detect your emotion. ";
+        }*/
+
+        const prompt = "The user is feeling " + emotion + ". Please respond empathetically and provide helpful advice to the following message: " + input;
+        console.log("Prompt for AI:", prompt);
         try {
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/respond`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ text: input })
+                body: JSON.stringify({ text: prompt })
             });
-            if (!res.ok) {
-                finalBotMessage.text = "Sorry, I didn't understand that.";
-            }
             const data = await res.json();
-            finalBotMessage.text = data.response;
+            finalBotMessage.text += data.response;
         }
         catch (error) {
             console.error("Error sending message:", error);
+            finalBotMessage.text += "I encountered an error while processing your request. Please try again. ⚠️";
         }
 
 
@@ -52,7 +71,7 @@ const Conversation = () => {
     };
 
     return (
-        <div className="flex flex-col space-y-4 p-4 py-50 max-w-2xl mx-auto">
+        <div className="flex flex-col space-y-10 p-4 py-50 max-w-2xl min-w-xl mx-auto">
             <div className="flex flex-col space-y-2">
                 {messages.map((msg, idx) => (
                     <div key={idx} className={`
