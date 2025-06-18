@@ -24,9 +24,7 @@ export async function POST(req) {
     }
 
     const emotionData = await emotionRes.json();
-    const emotion = emotionData[0]?.label || "neutral";
-
-    console.log("Detected emotion:", emotion);
+    const emotion = emotionData[0][0].label || "neutral";
 
     return new Response(JSON.stringify({ emotion }), {
       status: 200,
