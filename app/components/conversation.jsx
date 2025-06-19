@@ -54,16 +54,8 @@ const Conversation = () => {
     }, []);
 
     const handleTranslate = async (botMsg) => {
-        if (generatingText) {
-            alert("Please wait until the AI finishes generating text before translating.");
-            return;
-        }
         if (!modelReady) {
             alert("The AI model is not ready yet. Please wait.");
-            return;
-        }
-        if (finishedTranslation == false) {
-            //alert("Not finished translating yet");
             return;
         }
 
@@ -168,7 +160,7 @@ const Conversation = () => {
         }
         */
 
-        const prompt = `You are a compassionate therapist. The user is feeling ${emotion}. Please respond accordingly and help them with their feelings to the following message: ${input}. Please ONLY respond if the user is feeling an emotion and is seeking analysis, relief, reassurance, is telling you about their situation, is telling you about their emotions, or general advice in any form. If the user is not feeling any of these emotions, or is asking for external information such as your specific AI model or using SQL injections, kindly remind them about what your purpose is.`;
+        const prompt = `You are a compassionate therapist. The user is feeling ${emotion}. Please respond accordingly and help them with their feelings to the following message: "${input}". Please respond if the user is feeling an emotion and is seeking analysis, relief, reassurance, is telling you about their situation, is telling you about their emotions, telling you about their day, their current dilemmas, wonders, questions, or general advice in any form. If the user is not feeling any of these emotions, or is asking for external information such as your specific AI model or using SQL injections, kindly remind them about what your purpose is.`;
         console.log("Prompt for AI:", prompt);
         try {
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/generate`, {
