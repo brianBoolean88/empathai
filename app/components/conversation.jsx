@@ -2,11 +2,29 @@
 
 import React, { useState, useEffect } from "react";
 
+const languages = [
+    { code: "en", label: "English" },
+    { code: "es", label: "Spanish" },
+    { code: "fr", label: "French" },
+    { code: "de", label: "German" },
+    { code: "zh", label: "Chinese Simplified" },
+    { code: "zt", label: "Chinese Traditional" },
+    { code: "ar", label: "Arabic" },
+    { code: "pt", label: "Portuguese" },
+    { code: "it", label: "Italian" },
+    { code: "nl", label: "Dutch" },
+];
+
+
 const Conversation = () => {
     const [modelReady, setModelReady] = useState(false);
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState("");
     const [shownMessages, setShownMessages] = useState("");
+    const [selectedLang, setSelectedLang] = useState("en");
+    const [translating, setTranslating] = useState(false);
+    const [finishedTranslation, setFinishedTranslation] = useState(true);
+    const [generatingText, setGeneratingText] = useState(false);
 
     useEffect(() => {
         let interval;
@@ -35,8 +53,59 @@ const Conversation = () => {
         return () => clearInterval(interval);
     }, []);
 
+    const handleTranslate = async (botMsg) => {
+        if (generatingText) {
+            alert("Please wait until the AI finishes generating text before translating.");
+            return;
+        }
+        if (!modelReady) {
+            alert("The AI model is not ready yet. Please wait.");
+            return;
+        }
+        if (finishedTranslation == false) {
+            //alert("Not finished translating yet");
+            return;
+        }
+
+        setTranslating(true);
+
+        const language = languages.find(lang => lang.code === selectedLang);
+        try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/translate`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    text: botMsg,
+                    target: language.code
+                })
+            });
+            const data = await res.json();
+            setTranslating(false);
+            setFinishedTranslation(true);
+            console.log(data.translated_text)
+            return data.translated_text
+        }
+        catch (error) {
+            console.error("Error translating message:", error);
+            alert("Failed to translate the message. Please try again later.");
+        }
+
+
+    };
+
     const sendMessage = async () => {
-        if (!input.trim()) return;
+        if (!input.trim()) {
+            alert("Please enter a message before sending.");
+            return;
+        }
+        if (translating) {
+            alert("Please wait until the translation is complete before sending a new message.");
+            return;
+        };
+        if (generatingText) {
+            alert("Please wait until the AI finishes generating text before sending a new message.");
+            return;
+        }
 
         if (!modelReady) {
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/status`, {
@@ -48,6 +117,11 @@ const Conversation = () => {
                 setModelReady(true);
                 console.log("Model is now ready!");
             }
+            else if (data.status == "language") {
+                console.error("Model is downloading the language model. Please wait.");
+                setMessages(prev => [...prev, { role: "bot", text: "The model is downloading the language model. Please Wait." }]);
+                return;
+            }
             else {
                 console.error("Model is not ready yet. Please wait.");
                 setMessages(prev => [...prev, { role: "bot", text: "The model is not ready yet. Please try again later." }]);
@@ -55,6 +129,7 @@ const Conversation = () => {
             }
         }
 
+        setFinishedTranslation(false);
 
         const newMessage = { role: "user", text: input };
         const loadingMessage = { role: "bot", text: "..." };
@@ -68,12 +143,13 @@ const Conversation = () => {
 
         window.scrollTo(0, document.body.scrollHeight);
 
-        const finalBotMessage = {
+        let finalBotMessage = {
             role: "bot",
             text: "",
         };
         let emotion = "neutral";
 
+        setGeneratingText(true);
         /*
         try{
             const res1 = await fetch("/api/classify", {
@@ -108,6 +184,12 @@ const Conversation = () => {
             finalBotMessage.text += "I encountered an error while processing your request. Please try again. ⚠️";
         }
 
+        if (selectedLang != "en") {
+            console.log(finalBotMessage)
+            const newText = handleTranslate(finalBotMessage.text)
+            finalBotMessage.text = newText
+            console.log(finalBotMessage)
+        }
 
         setMessages(prev => {
             const updated = [...prev];
@@ -115,42 +197,70 @@ const Conversation = () => {
             return updated;
         });
 
+
+
         window.scrollTo(0, document.body.scrollHeight);
+        setGeneratingText(false);
     };
 
     return (
-        <div className="flex flex-col space-y-10 p-4 py-50 max-w-2xl min-w-xl mx-auto">
+        <div>
+            <div className="flex flex-col space-y-10 p-4 py-50 max-w-2xl min-w-xl mx-auto">
 
-            <div className="flex flex-col items-center space-y-4 p-4">
-                <div className="text-center text-gray-700 text-xl">
-                    {shownMessages}
+                <div className="flex flex-col items-center space-y-4 p-4">
+                    <div className="text-center text-gray-700 text-xl">
+                        {shownMessages}
+                    </div>
                 </div>
-            </div>
 
-            <div className="flex flex-col space-y-2 mt-30">
-                {messages.map((msg, idx) => (
-                    <div key={idx} className={`
+                <div className="flex flex-col space-y-2 mt-30">
+                    {messages.map((msg, idx) => (
+                        <div key={idx} className={`
             p-2 rounded
             ${msg.role === "user" ? "bg-purple-800 self-end text-right" : "bg-gray-900 text-left"}
         `}>
-                        {msg.role === "user" ? "You: " : "Empath AI: "}
-                        {msg.text}
+                            {msg.role === "user" ? "You: " : "Empath AI: "}
+                            {msg.text}
+                        </div>
+                    ))}
+                </div>
+                <div className="py-20">
+                    <div className="flex space-x-2">
+                        <textarea
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            className="flex-1 border p-2 rounded bg-slate-300 text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-300 resize-y"
+                            placeholder="Say something..."
+                            rows={3}
+                            onKeyDown={e => {
+                                if (e.key === "Enter" && !e.shiftKey) {
+                                    e.preventDefault();
+                                    sendMessage();
+                                }
+                            }}
+                        />
+                        <button onClick={sendMessage} className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">
+                            Send
+                        </button>
                     </div>
-                ))}
-            </div>
-            <div className="flex space-x-2">
-                <textarea
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    className="flex-1 border p-2 rounded bg-slate-300 text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-300 resize-y"
-                    placeholder="Say something..."
-                    rows={3}
-                />
-                <button onClick={sendMessage} className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">
-                    Send
-                </button>
+                    <br></br>
+                    <select
+                        value={selectedLang}
+                        onChange={e => setSelectedLang(e.target.value)}
+                        className="mt-20 my-20 border rounded p-1 text-slate-900"
+                    >
+                        {languages.map(lang => (
+                            <option key={lang.code} value={lang.code}>{lang.label}</option>
+                        ))}
+                    </select>
+                    <br></br>
+                </div>
+
+
+
             </div>
         </div>
+
     );
 };
 

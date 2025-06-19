@@ -28,7 +28,7 @@ export default function Home() {
           </p>
           <Conversation />
           <a
-            className="bg-indigo-500 text-white px-6 py-3 rounded-2xl text-lg hover:bg-indigo-300 hover:scale-110 transition-transform duration-1000 ease-in-out shadow-lg"
+            className="mt-40 bg-indigo-500 text-white px-6 py-3 rounded-2xl text-lg hover:bg-indigo-300 hover:scale-110 transition-transform duration-1000 ease-in-out shadow-lg"
             href="/"
           >
             Return

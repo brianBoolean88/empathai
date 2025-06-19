@@ -1,36 +1,37 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# 🤖 Empath AI
 
-## Getting Started
+Empath AI delivers compassionate and understanding conversations powered by a finely tuned AI model. Built to listen, understand, and respond with empathy.
 
-First, run the development server:
+## ✨ Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+### 🧠 AI-Powered Insights
+Empath AI uses fine-tuned models built on top of Hugging Face’s state-of-the-art architectures, ensuring high performance and scalability for dynamic, real-world conversations.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### ⚡ Real-Time Data Processing
+Efficiently handles live data streams with low latency. Real-time processing enables dynamic interactions and smooth conversation flows.
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+### 🌍 Multi-Language Support
+Supports **9 languages** with automatic translation, enabling users across the globe to connect with empathy and understanding.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 🔐 Secure & Anonymous
+User privacy is a top priority. All interactions are completely anonymous and never stored. Conversations are end-to-end protected.
 
-## Learn More
+## 🧩 Models Used
 
-To learn more about Next.js, take a look at the following resources:
+Empath AI leverages three Hugging Face models:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- 🧪 **Emotion Predictor**: [distilbert-base-uncased-emotion](https://huggingface.co/bhadresh-savani/distilbert-base-uncased-emotion)  
+  Used to detect the emotional state of the user before generating responses.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- 🔧 **Base Language Model**: [Mistral-7B-Instruct-v0.1](https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.1)  
+  Served as the foundation for fine-tuning with empathetic data.
 
-## Deploy on Vercel
+- 💖 **Fine-Tuned Empathy Model**: [Mistral-7B-Instruct-Empathy](https://huggingface.co/briantruefalse/Mistral-7B-Instruct-Empathy)  
+  A custom fine-tuned version trained on emotional and supportive conversations from Reddit, emotional corpora, and therapy-style datasets.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🚀 Tech Stack
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Backend**: [FastAPI](https://fastapi.tiangolo.com/)  
+- **Language**: Python  
+- **Model Inference**: Hugging Face Transformers  
+- **Deployment**: Easily deployable with scalable backends (e.g., VLLM, NVIDIA RTX setups)

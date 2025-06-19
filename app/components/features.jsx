@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShieldCheck, Cpu, LayoutDashboard, TrendingUp, Brain } from 'lucide-react';
+import { ShieldCheck, Cpu, LayoutDashboard, Earth, Brain } from 'lucide-react';
 
 const features = [
   {
@@ -8,9 +8,9 @@ const features = [
     description: 'Handle live data streams with low latency and high efficiency. Real-time processing capabilities for dynamic datasets.'
   },
   {
-    title: 'User Interface',
-    icon: <LayoutDashboard className="w-8 h-8 text-purple-600 mb-3" />,
-    description: 'An intuitive and clean UI for seamless user experience. Easily navigate through features and functionalities.'
+    title: 'Language Support',
+    icon: <Earth className="w-8 h-8 text-purple-600 mb-3" />,
+    description: 'Supports 9 languages! The AI will respond promptly with appropriateness ensured, with automatic translation!'
   },
   {
     title: 'AI-Powered Insights',
