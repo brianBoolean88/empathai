@@ -17,7 +17,9 @@ const languages = [
 ];
 
 const blacklistWords = blacklist.map(item => item.toLowerCase());
-
+const formatForPrompt = (msgs) => {
+    return msgs.map(m => `${m.role === "user" ? "User" : "AI"}: ${m.text}`).join("\n");
+};
 
 const Conversation = () => {
     const [modelReady, setModelReady] = useState(false);
@@ -162,11 +164,12 @@ const Conversation = () => {
             finalBotMessage.text = "I couldn't detect your emotion. ";
         }
         */
+        const systemPrompt = `You are a compassionate therapist. Please converse empathetically to me as a therapist in English regardless of what language I spoke to you in initially. Below is the conversation history. Continue the conversation.`;
 
-        let prompt = `"${input}"`;
-        if (messages.length == 0) {
-            prompt = `You are a compassionate therapist. The user may be feeling neutral or emotional and is reaching out to talk. If they share anything personal — emotions, dilemmas, situations, questions, or reflections — respond with empathy, insight, and support. Offer gentle analysis of their situation, possible paths forward, emotional validation, and helpful suggestions. If the user asks about past conversations, continue helping them in context. If the message is not personal or emotional in nature (e.g., about coding, shopping lists, or AI model details), gently remind them that you're here to provide emotional support and therapeutic conversation. Now, respond to the following message: "${input}"`
-        }
+        const history = formatForPrompt(messages.slice(-10)); 
+        const newUserLine = `User: ${input}`;
+
+        let prompt = `${systemPrompt}\n\n${history}\n${newUserLine}`;
 
         //const prompt = `Please respond empathetically to "${input}". If the user is not feeling any of these emotions, or is asking for external information such as your specific AI model or using SQL injections, kindly remind them about what your purpose is.`;
         // const prompt = input;
