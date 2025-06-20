@@ -1,6 +1,6 @@
 import threading
-from nltk.tokenize import sent_tokenize
-import nltk
+#from nltk.tokenize import sent_tokenize
+#import nltk
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -9,10 +9,14 @@ import torch
 import argostranslate.package
 import argostranslate.translate
 
+import asyncio
+from contextlib import asynccontextmanager
+from typing import List
+
 global installedLanguages
 installedLanguages = False
 
-nltk.download('punkt_tab')
+#nltk.download('punkt_tab')
 
 model_id = "briantruefalse/Mistral-7B-Instruct-Empathy"
 #model_id = "mistralai/Mistral-7B-Instruct-v0.1"
@@ -20,13 +24,10 @@ model_ready = False
 tokenizer = None
 model = None
 
-
-def remove_incomplete_last_sentence(text):
-    sentences = sent_tokenize(text)
-    if not text.strip().endswith(('.', '!', '?')) and sentences:
-        sentences = sentences[:-1]
-    return ' '.join(sentences)
-
+def warm_up():
+    dummy = tokenizer("[INST] Hello [/INST]", return_tensors="pt").to(model.device)
+    with torch.inference_mode():
+        model.generate(**dummy, max_new_tokens=2)
 
 def load_model():
     global tokenizer, model, model_ready
@@ -37,14 +38,18 @@ def load_model():
         bnb_4bit_compute_dtype=torch.float16,
     )
 
-    tokenizer = AutoTokenizer.from_pretrained(model_id)
+    tokenizer = AutoTokenizer.from_pretrained(model_id, use_fast=True)
     model = AutoModelForCausalLM.from_pretrained(
         model_id,
         torch_dtype=torch.float16,
         device_map="cuda",
+        attn_implementation="flash_attention_2",
         quantization_config=bnb_config
     )
     model.eval()
+    model = torch.compile(model, mode="max-autotune")
+    warm_up()
+
     model_ready = True
     print("✅ Model loaded and ready")
 
@@ -67,12 +72,29 @@ def load_translation_models():
 
     installedLanguages = True
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    batch_worker_task = asyncio.create_task(batch_worker())
+    
+    yield
+
+    batch_worker_task.cancel()
+    try:
+        await batch_worker_task
+    except asyncio.CancelledError:
+        pass
 
 threading.Thread(target=load_model).start()
 threading.Thread(target=load_translation_models).start()
 
-app = FastAPI()
+app = FastAPI(lifespan = lifespan)
 
+class GenerateRequest(BaseModel):
+    prompt: str
+
+request_queue = asyncio.Queue()
+BATCH_SIZE = 8
+BATCH_TIMEOUT = 0.01  # seconds
 
 @app.get("/status")
 async def check_status():
@@ -112,6 +134,8 @@ class GenerateRequest(BaseModel):
     prompt: str
 
 
+
+
 @app.post("/translate")
 async def translate_text(req: TranslateRequest):
     if not req.text:
@@ -130,29 +154,59 @@ async def translate_text(req: TranslateRequest):
     return {"translated_text": translated}
 
 
+class RequestWrapper:
+    def __init__(self, prompt):
+        self.prompt = prompt
+        self.future = asyncio.get_event_loop().create_future()
+
 @app.post("/generate")
 async def generate_text(request: GenerateRequest):
-    if not model_ready:
-        return {"generated_text": "Model is still loading, please try again."}
+    wrapper = RequestWrapper(request.prompt)
+    await request_queue.put(wrapper)
+    result = await wrapper.future
+    return {"generated_text": result}
 
-    if not request.prompt:
-        raise HTTPException(status_code=400, detail="Prompt is required")
+async def batch_worker():
+    while True:
+        batch = []
+        try:
+            wrapper = await request_queue.get()
+            batch.append(wrapper)
 
-    prompt = f"[INST] {request.prompt} [/INST]"
-    inputs = tokenizer(prompt, return_tensors="pt",
-                       truncation=True, max_length=4096).to(model.device)
+            #we keep appending batches till we hit the size
+            try:
+                while len(batch) < BATCH_SIZE:
+                    wrapper = await asyncio.wait_for(request_queue.get(), timeout=BATCH_TIMEOUT)
+                    batch.append(wrapper)
+            except asyncio.TimeoutError:
+                pass
 
-    with torch.no_grad():
-        outputs = model.generate(
-            **inputs,
-            max_new_tokens=80,
-            do_sample=False,
-            temperature=0.8,
-            top_p=0.95,
-            eos_token_id=tokenizer.eos_token_id
-        )
+            prompts = [f"[INST] {w.prompt} [/INST]" for w in batch]
 
-    generated_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
-    output = generated_text.split("[/INST]")[-1].strip()
-    final_output = remove_incomplete_last_sentence(output)
-    return {"generated_text": final_output}
+            #return batch of prompts
+            inputs = tokenizer(prompts, return_tensors="pt", padding=True, truncation=True, max_length=4096)
+
+            #CPU staging in fixed areas
+            inputs = {k: v.pin_memory() for k, v in inputs.items()}
+            inputs = {k: v.to(model.device, non_blocking=True) for k, v in inputs.items()}
+
+            with torch.inference_mode():
+                outputs = model.generate(
+                    **inputs,
+                    max_new_tokens=80,
+                    do_sample=False,
+                    eos_token_id=tokenizer.eos_token_id,
+                    use_cache=True,
+                )
+
+            #decode in a batch
+            results = tokenizer.batch_decode(outputs, skip_special_tokens=True)
+            clean_outputs = [text.split("[/INST]")[-1].strip() for text in results]
+
+            for wrapper, output in zip(batch, clean_outputs):
+                wrapper.future.set_result(output)
+
+        except Exception as e:
+            for wrapper in batch:
+                if not wrapper.future.done():
+                    wrapper.future.set_exception(e)

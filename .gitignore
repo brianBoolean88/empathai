@@ -39,3 +39,16 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+
+/mistral-therapist/
+/mistral-therapist/adapter_model.safetensors
+/mistral-therapist/adapter_config.json
+/mistral-therapist/tokenizer.json
+/*.safetensors
+/*.bin
+
+__pycache__/
+venv/
+
+notes.md

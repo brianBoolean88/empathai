@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import blacklist from '/app/components/blacklistWords.json';
 
 const languages = [
     { code: "en", label: "English" },
@@ -14,6 +15,8 @@ const languages = [
     { code: "it", label: "Italian" },
     { code: "nl", label: "Dutch" },
 ];
+
+const blacklistWords = blacklist.map(item => item.toLowerCase());
 
 
 const Conversation = () => {
@@ -160,16 +163,29 @@ const Conversation = () => {
         }
         */
 
-        const prompt = `You are a compassionate therapist. The user is feeling ${emotion}. Please respond accordingly and help them with their feelings to the following message: "${input}". Please respond if the user is feeling an emotion and is seeking analysis, relief, reassurance, is telling you about their situation, is telling you about their emotions, telling you about their day, their current dilemmas, wonders, questions, or general advice in any form. If the user is not feeling any of these emotions, or is asking for external information such as your specific AI model or using SQL injections, kindly remind them about what your purpose is.`;
+        let prompt = `"${input}"`;
+        if (messages.length == 0) {
+            prompt = `You are a compassionate therapist. The user may be feeling neutral or emotional and is reaching out to talk. If they share anything personal — emotions, dilemmas, situations, questions, or reflections — respond with empathy, insight, and support. Offer gentle analysis of their situation, possible paths forward, emotional validation, and helpful suggestions. If the user asks about past conversations, continue helping them in context. If the message is not personal or emotional in nature (e.g., about coding, shopping lists, or AI model details), gently remind them that you're here to provide emotional support and therapeutic conversation. Now, respond to the following message: "${input}"`
+        }
+
+        //const prompt = `Please respond empathetically to "${input}". If the user is not feeling any of these emotions, or is asking for external information such as your specific AI model or using SQL injections, kindly remind them about what your purpose is.`;
+        // const prompt = input;
         console.log("Prompt for AI:", prompt);
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/generate`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ prompt: prompt })
-            });
-            const data = await res.json();
-            finalBotMessage.text += data.generated_text;
+            const lowerInput = input.toLowerCase();
+            const matched = blacklistWords.some(word => lowerInput.includes(word.toLowerCase()));
+
+            if (matched) {
+                finalBotMessage.text += "I'm here to help you with emotional or personal matters. Can you tell me how you're feeling today?";
+            } else {
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/generate`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ prompt })
+                });
+                const data = await res.json();
+                finalBotMessage.text += data.generated_text;
+            }
         }
         catch (error) {
             console.error("Error sending message:", error);

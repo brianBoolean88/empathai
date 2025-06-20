@@ -5,6 +5,7 @@ import torch
 from datasets import load_dataset
 
 
+
 def preprocess_function(examples):
     result = tokenizer(examples["text"], truncation=True, padding="max_length", max_length=512)
     result["labels"] = result["input_ids"].copy()
@@ -42,14 +43,14 @@ model = get_peft_model(model, peft_config)
 
 training_args = TrainingArguments(
     per_device_train_batch_size=2,
-    gradient_accumulation_steps=4,
-    num_train_epochs=3,
+    gradient_accumulation_steps=1,
+    num_train_epochs=10,
     learning_rate=2e-4,
     fp16=True,
     output_dir="./mistral-therapist",
     save_total_limit=2,
-    save_steps=100,
-    logging_steps=10,
+    save_steps=5,
+    logging_steps=1,
     report_to="none",
     remove_unused_columns=False
 )
@@ -66,7 +67,7 @@ trainer = Trainer(
     data_collator=DataCollatorForLanguageModeling(tokenizer, mlm=False),
 )
 
-#trainer.train()
+trainer.train()
 
 model.save_pretrained("./mistral-therapist")
 tokenizer.save_pretrained("./mistral-therapist")
