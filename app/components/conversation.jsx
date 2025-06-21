@@ -138,7 +138,7 @@ const Conversation = () => {
 
         setInput("");
 
-        window.scrollTo(0, document.body.scrollHeight);
+        window.scrollTo(0, document.body.scrollHeight/4);
 
         let finalBotMessage = {
             role: "bot",
@@ -207,10 +207,6 @@ const Conversation = () => {
             updated[updated.length - 1] = finalBotMessage;
             return updated;
         });
-
-
-
-        window.scrollTo(0, document.body.scrollHeight);
         setGeneratingText(false);
     };
 
