@@ -1,0 +1,11 @@
+fastapi
+uvicorn[standard]
+transformers
+torch
+pydantic
+argostranslate
+# Optional: nltk if you uncomment sent_tokenize
+# nltk
+
+# Optional: if using GPU with quantization (from BitsAndBytesConfig usage)
+# bitsandbytes  # Only if you're using quantized models (e.g., 4-bit, 8-bit)
