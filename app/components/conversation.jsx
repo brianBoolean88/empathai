@@ -35,8 +35,7 @@ const Conversation = () => {
         let interval;
         const checkModel = async () => {
             try {
-                const baseUrl = `${window.location.protocol}//${window.location.hostname}:${process.env.NEXT_PUBLIC_FASTAPI_PORT}`;
-                const res = await fetch(`${baseUrl}/status`, {
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/status`, {
                     method: "GET",
                     headers: { "Content-Type": "application/json" },
                 });
@@ -69,8 +68,7 @@ const Conversation = () => {
 
         const language = languages.find(lang => lang.code === selectedLang);
         try {
-            const baseUrl = `${window.location.protocol}//${window.location.hostname}:${process.env.NEXT_PUBLIC_FASTAPI_PORT}`;
-            const res = await fetch(`${baseUrl}/translate`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/translate`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -107,8 +105,7 @@ const Conversation = () => {
         }
 
         if (!modelReady) {
-            const baseUrl = `${window.location.protocol}//${window.location.hostname}:${process.env.NEXT_PUBLIC_FASTAPI_PORT}`;
-            const res = await fetch(`${baseUrl}/status`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/status`, {
                 method: "GET",
                 headers: { "Content-Type": "application/json" },
             });
@@ -141,7 +138,7 @@ const Conversation = () => {
 
         setInput("");
 
-        window.scrollTo(0, document.body.scrollHeight / 4);
+        window.scrollTo(0, document.body.scrollHeight/4);
 
         let finalBotMessage = {
             role: "bot",
@@ -169,7 +166,7 @@ const Conversation = () => {
         */
         const systemPrompt = `You are a compassionate therapist. Please converse empathetically to me as a therapist in English regardless of what language I spoke to you in initially. Below is the conversation history. Continue the conversation.`;
 
-        const history = formatForPrompt(messages.slice(-10));
+        const history = formatForPrompt(messages.slice(-10)); 
         const newUserLine = `User: ${input}`;
 
         let prompt = `${systemPrompt}\n\n${history}\n${newUserLine}`;
@@ -184,8 +181,7 @@ const Conversation = () => {
             if (matched) {
                 finalBotMessage.text += "I'm here to help you with emotional or personal matters. Can you tell me how you're feeling today?";
             } else {
-                const baseUrl = `${window.location.protocol}//${window.location.hostname}:${process.env.NEXT_PUBLIC_FASTAPI_PORT}`;
-                const res = await fetch(`${baseUrl}/generate`, {
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/generate`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ prompt })
@@ -216,7 +212,7 @@ const Conversation = () => {
 
     return (
         <div>
-            <div className="flex flex-col space-y-10 p-4 py-50 max-w-2xl min-w-xl mx-auto">
+            <div className="flex flex-col space-y-10 p-4 py-10 max-w-2xl min-w-xl mx-auto">
 
                 <div className="flex flex-col items-center space-y-4 p-4">
                     <div className="text-center text-gray-700 text-xl">
