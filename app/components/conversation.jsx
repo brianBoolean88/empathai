@@ -191,7 +191,7 @@ const Conversation = () => {
             }
         }
         catch (error) {
-            console.error("Error sending message:", error);
+            console.error("Error sending  message:", error);
             finalBotMessage.text += "I encountered an error while processing your request. Please try again. ⚠️";
         }
 
