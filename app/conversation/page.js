@@ -3,6 +3,7 @@ import Conversation from "/app/components/conversation.jsx";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Footer from "../components/footer";
+import Link from 'next/link';
 
 export default function Home() {
   return (
@@ -27,12 +28,12 @@ export default function Home() {
             Start a conversation to experience the empathy of AI.
           </p>
           <Conversation />
-          <a
+          <Link 
             className="mt-40 bg-indigo-500 text-white px-6 py-3 rounded-2xl text-lg hover:bg-indigo-300 hover:scale-110 transition-transform duration-1000 ease-in-out shadow-lg"
             href="/"
           >
             Return
-          </a>
+          </Link>
         </motion.div>
       </div>
       <Footer />
