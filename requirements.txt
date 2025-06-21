@@ -4,7 +4,6 @@ transformers
 torch
 pydantic
 argostranslate
-git+https://github.com/Dao-AILab/flash-attention.git#subdirectory=csrc
 # Optional: nltk if you uncomment sent_tokenize
 # nltk
 
