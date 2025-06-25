@@ -59,4 +59,6 @@ Finally, you could enjoy your AI therapy bot. This bot will utilize your GPU for
 
 Please note that I did not intend to publish this to an actual website host because I do not plan to keep this project (from my end) online long-term. The back-end python script would cost money as it utilizes a GPU for inference model predictions, and as I do not have the relevant funds for this project, I did not upload this project to an actual production website.
 
+Free services also take too long to compile and provide inference results as they use CPU instead of GPU.
+
 However, you could utilize my code from my GitHub repository and use FASTAPI, PyTorch, CUDA, Algotranslate, etc. for your own projects if you would like! Just please give a little credit :)
