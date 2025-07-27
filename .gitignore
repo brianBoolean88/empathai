@@ -40,11 +40,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-
-/mistral-therapist/
-/mistral-therapist/adapter_model.safetensors
-/mistral-therapist/adapter_config.json
-/mistral-therapist/tokenizer.json
 /*.safetensors
 /*.bin
 
