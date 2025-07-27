@@ -48,6 +48,9 @@ next-env.d.ts
 /*.safetensors
 /*.bin
 
+/frontend/.next/
+/frontend/node_modules/
+
 __pycache__/
 venv/
 

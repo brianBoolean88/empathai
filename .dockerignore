@@ -1,0 +1,6 @@
+venv
+mistral-therapist
+.next
+__pycache__
+LICENSE
+.gitignore
